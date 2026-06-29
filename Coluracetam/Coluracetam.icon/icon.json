@@ -1,0 +1,158 @@
+{
+  "color-space-for-untagged-svg-colors" : "display-p3",
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.14100,0.08600,0.34100,1.00000",
+      "display-p3:0.04700,0.02700,0.14900,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 0
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0.9
+      }
+    }
+  },
+  "groups" : [
+    {
+      "blur-material" : 1,
+      "layers" : [
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "pupil.svg",
+          "name" : "Pupil"
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "Pupil",
+      "shadow" : {
+        "kind" : "layer-color",
+        "opacity" : 1
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.6
+      }
+    },
+    {
+      "blur-material" : null,
+      "layers" : [
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_00.svg",
+          "name" : "petal_00"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_01.svg",
+          "name" : "petal_01"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_02.svg",
+          "name" : "petal_02"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_03.svg",
+          "name" : "petal_03"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_04.svg",
+          "name" : "petal_04"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_05.svg",
+          "name" : "petal_05"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_06.svg",
+          "name" : "petal_06"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_07.svg",
+          "name" : "petal_07"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_08.svg",
+          "name" : "petal_08"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_09.svg",
+          "name" : "petal_09"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_10.svg",
+          "name" : "petal_10"
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "petal_11.svg",
+          "name" : "petal_11"
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "Iris",
+      "shadow" : {
+        "kind" : "layer-color",
+        "opacity" : 1
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "blur-material" : null,
+      "layers" : [
+        {
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "bloom.svg",
+          "name" : "Glow"
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "Glow",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.4
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.16
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [
+      "macOS"
+    ]
+  }
+}

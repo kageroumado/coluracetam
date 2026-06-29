@@ -1,0 +1,36 @@
+import AppKit
+import ColuracetamKit
+import QuickLookThumbnailing
+
+class ThumbnailProvider: QLThumbnailProvider {
+    override func provideThumbnail(
+        for request: QLFileThumbnailRequest,
+        _ handler: @escaping (QLThumbnailReply?, (any Error)?) -> Void,
+    ) {
+        let url = request.fileURL
+        let maximumSize = request.maximumSize
+        let scale = request.scale
+        // The reply must be rendered on the main actor (ImageRenderer/SwiftUI).
+        // `handler` is a non-Sendable callback we invoke exactly once from that
+        // task and never touch again, so transferring it in is race-free.
+        nonisolated(unsafe) let handler = handler
+
+        Task { @MainActor in
+            guard let source = try? String(contentsOf: url, encoding: .utf8),
+                  let image = MarkdownThumbnail.image(
+                      source: source, size: maximumSize, displayScale: scale,
+                  )
+            else {
+                // Hand back nothing so Finder falls back to the generic icon.
+                handler(nil, nil)
+                return
+            }
+
+            let reply = QLThumbnailReply(contextSize: maximumSize, currentContextDrawing: {
+                image.draw(in: CGRect(origin: .zero, size: maximumSize))
+                return true
+            })
+            handler(reply, nil)
+        }
+    }
+}

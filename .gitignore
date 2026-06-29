@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+coluracetam-kit/Package.resolved
+
+# Local design notes / backlog
+Specs/
