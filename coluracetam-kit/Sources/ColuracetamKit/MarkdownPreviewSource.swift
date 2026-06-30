@@ -21,6 +21,21 @@ public enum MarkdownPreviewSource {
     /// - Returns: The (possibly truncated) source. When truncated, a short
     ///   italic note is appended so the reader knows the preview is partial.
     public static func read(contentsOf url: URL) throws -> String {
+        let (text, truncated) = try boundedPrefix(contentsOf: url, maxBytes: maxBytes, maxLines: maxLines)
+        guard truncated else { return text }
+        return text + "\n\n---\n\n*Preview truncated — open in Coluracetam to read the full document.*\n"
+    }
+
+    /// Reads a bounded leading slice of a file via a single `FileHandle` read.
+    ///
+    /// Shared by the preview and thumbnail paths, which differ only in their
+    /// byte/line budgets — a thumbnail needs far less than a preview. Never
+    /// loads more than `maxBytes` from disk, so cost is independent of file size.
+    ///
+    /// - Returns: The sliced text and whether either budget forced a truncation.
+    static func boundedPrefix(
+        contentsOf url: URL, maxBytes: Int, maxLines: Int,
+    ) throws -> (text: String, truncated: Bool) {
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
 
@@ -42,11 +57,6 @@ public enum MarkdownPreviewSource {
             lines = Array(lines.prefix(maxLines))
             truncated = true
         }
-        var result = lines.joined(separator: "\n")
-
-        if truncated {
-            result += "\n\n---\n\n*Preview truncated — open in Coluracetam to read the full document.*\n"
-        }
-        return result
+        return (lines.joined(separator: "\n"), truncated)
     }
 }

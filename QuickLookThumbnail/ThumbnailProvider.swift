@@ -16,10 +16,11 @@ class ThumbnailProvider: QLThumbnailProvider {
         nonisolated(unsafe) let handler = handler
 
         Task { @MainActor in
-            guard let source = try? String(contentsOf: url, encoding: .utf8),
-                  let image = MarkdownThumbnail.image(
-                      source: source, size: maximumSize, displayScale: scale,
-                  )
+            // Reads only a bounded prefix of the file (see MarkdownThumbnail.maxBytes)
+            // rather than loading the whole document into the memory-limited XPC.
+            guard let image = MarkdownThumbnail.image(
+                contentsOf: url, size: maximumSize, displayScale: scale,
+            )
             else {
                 // Hand back nothing so Finder falls back to the generic icon.
                 handler(nil, nil)

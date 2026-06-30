@@ -19,6 +19,33 @@ public enum MarkdownThumbnail {
     /// "miniature page" look instead of a few oversized glyphs in a corner.
     private static let referenceWidth: CGFloat = 480
 
+    /// The largest prefix, in bytes, read from disk for a thumbnail.
+    ///
+    /// Calibrated to the visible capacity of the rendered page: a dense,
+    /// full-width square thumbnail fills at ~2 KB, and nothing past that is ever
+    /// drawn. 4 KB leaves margin for taller (portrait) requests and multi-byte
+    /// text while staying the bare minimum — the thumbnail XPC has a tight memory
+    /// ceiling, so reading a whole multi-megabyte file just to draw one page
+    /// would be wasteful and risks the extension being killed.
+    public static let maxBytes = 4 * 1_024
+
+    /// Renders a thumbnail by reading only a bounded prefix of the file at `url`.
+    ///
+    /// Preferred over ``image(source:size:displayScale:maxLines:)`` for the Quick
+    /// Look extension: it never loads more than ``maxBytes`` from disk, so cost
+    /// and memory stay flat regardless of document size.
+    public static func image(
+        contentsOf url: URL,
+        size: CGSize,
+        displayScale: CGFloat,
+        maxLines: Int = 60,
+    ) -> NSImage? {
+        guard let (source, _) = try? MarkdownPreviewSource.boundedPrefix(
+            contentsOf: url, maxBytes: maxBytes, maxLines: maxLines,
+        ) else { return nil }
+        return image(source: source, size: size, displayScale: displayScale, maxLines: maxLines)
+    }
+
     /// Renders the top of `source` as a page-like image sized for `size`.
     ///
     /// - Parameters:
