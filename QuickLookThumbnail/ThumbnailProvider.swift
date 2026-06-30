@@ -27,6 +27,9 @@ class ThumbnailProvider: QLThumbnailProvider {
             }
 
             let reply = QLThumbnailReply(contextSize: maximumSize, currentContextDrawing: {
+                // The page is rendered large and drawn down — ask for a quality
+                // downscale so shrunken text stays legible rather than aliased.
+                NSGraphicsContext.current?.imageInterpolation = .high
                 image.draw(in: CGRect(origin: .zero, size: maximumSize))
                 return true
             })
