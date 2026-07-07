@@ -18,12 +18,22 @@ nonisolated struct ColuracetamDocument: FileDocument {
     static let readableContentTypes: [UTType] = [.markdown]
 
     init(configuration: ReadConfiguration) throws {
-        guard let data = configuration.file.regularFileContents,
-              let string = String(data: data, encoding: .utf8)
-        else {
+        guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
         }
-        text = string
+        text = Self.decode(data)
+    }
+
+    /// Decodes file bytes with graceful fallbacks so an unusual encoding opens
+    /// (possibly imperfectly) instead of failing: UTF-8 first, UTF-16 when a
+    /// byte-order mark says so, Latin-1 (which accepts any byte) last.
+    /// Documents are always *saved* as UTF-8.
+    private static func decode(_ data: Data) -> String {
+        if let utf8 = String(data: data, encoding: .utf8) { return utf8 }
+        let hasUTF16BOM = data.count >= 2 &&
+            ((data[0] == 0xFF && data[1] == 0xFE) || (data[0] == 0xFE && data[1] == 0xFF))
+        if hasUTF16BOM, let utf16 = String(data: data, encoding: .utf16) { return utf16 }
+        return String(data: data, encoding: .isoLatin1) ?? String(decoding: data, as: UTF8.self)
     }
 
     func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {

@@ -18,6 +18,10 @@ final class DocumentWorkspace {
     /// match counting. Bookkeeping for commands, not view state — nothing reads
     /// it in a `body`, so it must not register observation dependencies.
     @ObservationIgnored var source = ""
+    /// Writes replacement text back into the document (set by `ContentView`,
+    /// which owns the document binding). Used by whole-buffer transforms like
+    /// line-ending conversion.
+    @ObservationIgnored var replaceText: ((String) -> Void)?
     /// The document's file URL, when saved to disk. Bookkeeping for export.
     @ObservationIgnored var fileURL: URL?
 
@@ -50,6 +54,46 @@ final class DocumentWorkspace {
         isFindPresented.toggle()
     }
 
+    // MARK: Line endings
+
+    /// The buffer's dominant line ending. Mixed endings read as CRLF if any
+    /// CRLF is present (conversion normalizes the stragglers either way).
+    var lineEnding: LineEnding {
+        source.contains("\r\n") ? .crlf : .lf
+    }
+
+    /// Rewrites every line ending in the document to `ending`.
+    func setLineEnding(_ ending: LineEnding) {
+        let normalized = source
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+        let converted = ending == .lf
+            ? normalized
+            : normalized.replacingOccurrences(of: "\n", with: "\r\n")
+        guard converted != source else { return }
+        replaceText?(converted)
+    }
+
+    // MARK: Go to line
+
+    /// Whether the go-to-line prompt is showing.
+    var isGoToLinePresented = false
+    /// The line-number field's text while the prompt is up.
+    var goToLineText = ""
+    /// A pending jump for the editor to perform; each request is unique so
+    /// jumping to the same line twice still re-scrolls.
+    var lineJump: LineJump?
+
+    func promptGoToLine() {
+        goToLineText = ""
+        isGoToLinePresented = true
+    }
+
+    func performGoToLine() {
+        guard let line = Int(goToLineText.trimmingCharacters(in: .whitespaces)), line > 0 else { return }
+        lineJump = LineJump(line: line)
+    }
+
     // MARK: Export
 
     func exportPDF() {
@@ -60,6 +104,16 @@ final class DocumentWorkspace {
     func exportHTML() {
         let html = MarkdownExport.html(source: source, title: baseName)
         save(Data(html.utf8), name: "\(baseName).html", type: .html)
+    }
+
+    /// Prints the rendered document via the standard print panel.
+    func printDocument() {
+        let operation = MarkdownExport.printOperation(source: source, jobTitle: baseName)
+        if let window = NSApp.keyWindow {
+            operation.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
+        } else {
+            operation.run()
+        }
     }
 
     private var baseName: String {
@@ -80,6 +134,21 @@ private extension CGFloat {
     func rounded(toMultipleOf m: CGFloat) -> CGFloat {
         (self / m).rounded() * m
     }
+}
+
+/// A document's line-ending convention.
+enum LineEnding: Hashable {
+    /// Unix / macOS (`\n`).
+    case lf
+    /// Windows (`\r\n`).
+    case crlf
+}
+
+/// One go-to-line request. Identity makes repeated jumps to the same line
+/// distinct, so each request scrolls even if the line number didn't change.
+struct LineJump: Equatable {
+    let id = UUID()
+    let line: Int
 }
 
 // MARK: - Focused scene value

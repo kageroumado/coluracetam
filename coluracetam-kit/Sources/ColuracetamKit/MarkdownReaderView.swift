@@ -56,6 +56,8 @@ public struct MarkdownReaderView: View {
                 .padding(10)
                 .frame(maxWidth: 480, alignment: .leading)
                 .allowsHitTesting(false)
+                // Hover-only chrome; VoiceOver reads links in the text itself.
+                .accessibilityHidden(true)
                 .transition(.opacity)
         }
     }

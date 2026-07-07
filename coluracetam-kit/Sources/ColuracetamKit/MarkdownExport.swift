@@ -65,6 +65,44 @@ public enum MarkdownExport {
         return data as Data
     }
 
+    // MARK: Print
+
+    /// Builds a print operation for the rendered document.
+    ///
+    /// The page is a fresh TextKit stack using the same styler and decoration
+    /// drawing as the on-screen reader, laid out at the printable width and
+    /// paginated by AppKit. Printing always uses natural size (scale 1).
+    public static func printOperation(source: String, jobTitle: String? = nil) -> NSPrintOperation {
+        let info = (NSPrintInfo.shared.copy() as? NSPrintInfo) ?? NSPrintInfo()
+        info.horizontalPagination = .fit
+        info.verticalPagination = .automatic
+        info.isHorizontallyCentered = false
+        info.isVerticallyCentered = false
+
+        let width = info.paperSize.width - info.leftMargin - info.rightMargin
+        let layoutManager = MarkdownLayoutManager()
+        let storage = NSTextStorage(
+            attributedString: MarkdownTextStyler.attributedString(markdown: source))
+        storage.addLayoutManager(layoutManager)
+        let container = NSTextContainer(size: NSSize(width: width, height: CGFloat.greatestFiniteMagnitude))
+        container.lineFragmentPadding = 0
+        layoutManager.addTextContainer(container)
+
+        let textView = NSTextView(
+            frame: NSRect(origin: .zero, size: NSSize(width: width, height: 0)),
+            textContainer: container,
+        )
+        layoutManager.ensureLayout(for: container)
+        textView.setFrameSize(NSSize(
+            width: width,
+            height: ceil(layoutManager.usedRect(for: container).height),
+        ))
+
+        let operation = NSPrintOperation(view: textView, printInfo: info)
+        if let jobTitle { operation.jobTitle = jobTitle }
+        return operation
+    }
+
     // MARK: HTML
 
     /// Serializes `source` to a standalone, semantic HTML document.

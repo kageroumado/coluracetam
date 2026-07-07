@@ -17,6 +17,10 @@ struct MarkdownSourceEditor: NSViewRepresentable {
     /// button shows the editor's find bar, and dismissing the bar (its close
     /// button or the Escape key) clears the flag back, so the two never drift.
     @Binding var isFindPresented: Bool
+    /// Whether the line-number ruler is visible.
+    var showsLineNumbers = false
+    /// A pending go-to-line request; applied once per unique request.
+    var lineJump: LineJump?
 
     /// Matched to ``MarkdownRenderView``'s 20-pt padding so the source text in
     /// this pane lines up with the rendered text above it.
@@ -51,6 +55,9 @@ struct MarkdownSourceEditor: NSViewRepresentable {
         scrollView.onFindBarVisibilityChange = { [coordinator = context.coordinator] visible in
             coordinator.findBarVisibilityChanged(visible)
         }
+        scrollView.verticalRulerView = LineNumberRulerView(textView: textView, scrollView: scrollView)
+        scrollView.hasVerticalRuler = true
+        scrollView.rulersVisible = showsLineNumbers
         return scrollView
     }
 
@@ -58,11 +65,18 @@ struct MarkdownSourceEditor: NSViewRepresentable {
         guard let textView = scrollView.documentView as? NSTextView else { return }
         if textView.string != text {
             textView.string = text
+            (scrollView.verticalRulerView as? LineNumberRulerView)?.invalidateLineIndex()
+        }
+        if scrollView.rulersVisible != showsLineNumbers {
+            scrollView.rulersVisible = showsLineNumbers
         }
         let font = Self.font(scale: scale)
         if textView.font != font { textView.font = font }
         context.coordinator.focusIfNeeded(textView)
         context.coordinator.syncFind(isFindPresented, in: textView)
+        if let lineJump {
+            context.coordinator.applyIfNeeded(lineJump, in: textView)
+        }
     }
 
     private static func font(scale: CGFloat) -> NSFont {
@@ -87,6 +101,31 @@ struct MarkdownSourceEditor: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             text.wrappedValue = textView.string
+            (textView.enclosingScrollView?.verticalRulerView as? LineNumberRulerView)?
+                .invalidateLineIndex()
+        }
+
+        private var appliedJump: LineJump?
+
+        /// Selects and reveals the requested line (clamped to the last line),
+        /// once per unique request.
+        func applyIfNeeded(_ jump: LineJump, in textView: NSTextView) {
+            guard jump != appliedJump else { return }
+            appliedJump = jump
+
+            let string = textView.string as NSString
+            var range = NSRange(location: 0, length: 0)
+            var line = 1
+            if string.length > 0 {
+                range = string.lineRange(for: NSRange(location: 0, length: 0))
+                while line < jump.line, NSMaxRange(range) < string.length {
+                    range = string.lineRange(for: NSRange(location: NSMaxRange(range), length: 0))
+                    line += 1
+                }
+            }
+            textView.setSelectedRange(range)
+            textView.scrollRangeToVisible(range)
+            textView.window?.makeFirstResponder(textView)
         }
 
         /// Makes the editor first responder once it has a window, so a freshly
@@ -137,5 +176,22 @@ private final class FindBarObservingScrollView: NSScrollView {
             super.isFindBarVisible = newValue
             onFindBarVisibilityChange?(newValue)
         }
+    }
+
+    /// The scroll view underlaps the title bar (content scrolls beneath the
+    /// toolbar, offset via automatic content insets), but `tile()` places the
+    /// ruler over the full frame height — under the traffic lights. Push it
+    /// down to start at the content inset instead.
+    override func tile() {
+        super.tile()
+        guard rulersVisible, let ruler = verticalRulerView else { return }
+        let top = contentInsets.top
+        guard top > 0, ruler.frame.minY < top else { return }
+        ruler.frame = NSRect(
+            x: ruler.frame.minX,
+            y: top,
+            width: ruler.frame.width,
+            height: max(0, frame.height - top),
+        )
     }
 }
