@@ -1,20 +1,20 @@
 import SwiftUI
-import Textual
 
 /// A read-only, scrollable view that renders Markdown source as styled rich text.
 ///
 /// This view is the single rendering path shared by the main app's *rendered*
-/// mode, the Quick Look preview extension, and the thumbnail extension, so the
-/// in-app render and the Finder preview are guaranteed identical.
+/// mode, the live split's preview pane, and the Quick Look preview extension,
+/// so the in-app render and the Finder preview are guaranteed identical.
 ///
-/// Rendering is backed by [Textual](https://github.com/gonzalezreal/textual)'s
-/// `StructuredText`, styled with its GitHub preset (heading scale, dividers,
-/// code-block backgrounds, table rules) so light and dark both read well.
+/// Rendering is TextKit-backed (see ``MarkdownReaderView``): one `NSTextView`
+/// holds the whole document, giving native document-wide selection, link
+/// clicks, the system find bar, and viewport-lazy layout that scales to
+/// multi-megabyte documents. Styling mirrors Textual's GitHub preset.
 public struct MarkdownRenderView: View {
     private let source: String
     private let scale: CGFloat
-    private let searchTerm: String
     private let showsPlaceholder: Bool
+    private let isFindPresented: Binding<Bool>?
 
     /// Creates a view that renders the given Markdown source string.
     ///
@@ -22,18 +22,23 @@ public struct MarkdownRenderView: View {
     ///   - source: The Markdown source to render.
     ///   - scale: A font-size multiplier for reading-comfort zoom. `1` is the
     ///     document's natural size.
-    ///   - searchTerm: When non-empty, occurrences in the *rendered* text are
-    ///     highlighted. Matching is case- and diacritic-insensitive.
     ///   - showsPlaceholder: When `true` (the default), an empty document shows
     ///     a "nothing to preview" placeholder. The live editing split passes
     ///     `false` so the preview pane keeps a stable, full-bleed layout while
     ///     the user types into an empty document — a structural swap here would
     ///     otherwise steal first-responder from the editor on the first keystroke.
-    public init(source: String, scale: CGFloat = 1, searchTerm: String = "", showsPlaceholder: Bool = true) {
+    ///   - isFindPresented: Optional binding that shows/hides the native find
+    ///     bar, so a toolbar button can drive ⌘F-style find in the preview.
+    public init(
+        source: String,
+        scale: CGFloat = 1,
+        showsPlaceholder: Bool = true,
+        isFindPresented: Binding<Bool>? = nil,
+    ) {
         self.source = source
         self.scale = scale
-        self.searchTerm = searchTerm
         self.showsPlaceholder = showsPlaceholder
+        self.isFindPresented = isFindPresented
     }
 
     /// Creates a view by reading Markdown from a file URL.
@@ -41,10 +46,7 @@ public struct MarkdownRenderView: View {
     /// Convenience for the Quick Look extensions, which are handed a
     /// sandbox-granted file URL.
     public init(contentsOf url: URL, scale: CGFloat = 1) throws {
-        self.source = try String(contentsOf: url, encoding: .utf8)
-        self.scale = scale
-        self.searchTerm = ""
-        self.showsPlaceholder = true
+        self.init(source: try String(contentsOf: url, encoding: .utf8), scale: scale)
     }
 
     public var body: some View {
@@ -55,63 +57,21 @@ public struct MarkdownRenderView: View {
                 description: Text("There's nothing to preview yet."),
             )
         } else {
-            ScrollView {
-                styledText
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(20)
-            }
+            MarkdownReaderView(source: source, scale: scale, isFindPresented: isFindPresented)
         }
-    }
-
-    private var styledText: some View {
-        Group {
-            if searchTerm.isEmpty {
-                StructuredText(markdown: source)
-            } else {
-                // The parser captures the term; re-key the view by the term so a
-                // changed search re-parses (StructuredText only re-parses when its
-                // markup string changes, not when the parser instance does).
-                StructuredText(source, parser: HighlightingMarkdownParser(term: searchTerm))
-                    .id(searchTerm)
-            }
-        }
-        .textual.structuredTextStyle(.gitHub)
-        .textual.fontScale(scale)
-        .textual.textSelection(.enabled)
-    }
-
-    /// The number of occurrences of `term` in the *rendered* text of `source`.
-    ///
-    /// Counts against the parsed plain text (markdown syntax stripped) so the
-    /// reported count matches what ``init(source:scale:searchTerm:)`` highlights.
-    @MainActor
-    public static func matchCount(in source: String, of term: String) -> Int {
-        guard !term.isEmpty else { return 0 }
-        let plain = (try? AttributedStringMarkdownParser(baseURL: nil).attributedString(for: source))
-            .map { String($0.characters) } ?? source
-        var count = 0
-        var range = plain.startIndex ..< plain.endIndex
-        while let match = plain.range(
-            of: term, options: [.caseInsensitive, .diacriticInsensitive], range: range,
-        ) {
-            count += 1
-            if match.upperBound == plain.endIndex { break }
-            range = match.upperBound ..< plain.endIndex
-        }
-        return count
     }
 }
 
 #Preview {
     MarkdownRenderView(source: """
     # Coluracetam
-    
+
     Render Markdown the moment you press **space**.
-    
+
     - sharper contrast
     - more vivid color
     - `inline code`
-    
+
     ```swift
     let clarity = true
     ```

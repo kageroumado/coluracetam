@@ -11,8 +11,6 @@ struct ContentView: View {
     /// The text last known to be on disk — the baseline for deciding whether the
     /// buffer has unsaved edits when an external change arrives.
     @State private var lastDiskText: String
-    @State private var matchCount = 0
-    @FocusState private var findFieldFocused: Bool
 
     init(document: Binding<ColuracetamDocument>) {
         _document = document
@@ -28,19 +26,9 @@ struct ContentView: View {
     var body: some View {
         content
             .toolbar { toolbarContent }
-            .overlay(alignment: .top) { findBar }
             .focusedSceneValue(\.documentWorkspace, workspace)
-            .onChange(of: isEditing) { _, editing in
-                if !editing { findFieldFocused = false }
-            }
             .onChange(of: document.text) { _, text in
                 workspace.source = text
-                updateMatchCount()
-            }
-            .onChange(of: workspace.searchText) { updateMatchCount() }
-            .onChange(of: workspace.isFindPresented) { _, presented in
-                if presented, !isEditing { findFieldFocused = true }
-                if !presented { workspace.searchText = "" }
             }
             .onChange(of: fileURL) { _, url in workspace.fileURL = url }
             .task(id: fileURL) { await watchForExternalChanges() }
@@ -57,7 +45,8 @@ struct ContentView: View {
         if isEditing {
             // Live split: rendered preview on top, raw source below. The shared
             // render path updates as the buffer changes, so edits are reflected
-            // immediately without leaving the editor.
+            // immediately without leaving the editor. The editor pane owns the
+            // find bar in this mode.
             VSplitView {
                 MarkdownRenderView(
                     source: document.text,
@@ -72,7 +61,10 @@ struct ContentView: View {
             MarkdownRenderView(
                 source: document.text,
                 scale: workspace.scale,
-                searchTerm: workspace.isFindPresented ? workspace.searchText : "",
+                isFindPresented: Binding(
+                    get: { workspace.isFindPresented },
+                    set: { workspace.isFindPresented = $0 },
+                ),
             )
         }
     }
@@ -86,20 +78,6 @@ struct ContentView: View {
                 set: { workspace.isFindPresented = $0 },
             ),
         )
-    }
-
-    @ViewBuilder
-    private var findBar: some View {
-        if workspace.isFindPresented, !isEditing {
-            FindBar(
-                text: $workspace.searchText,
-                matchCount: matchCount,
-                focused: $findFieldFocused,
-            ) {
-                workspace.isFindPresented = false
-            }
-            .padding(12)
-        }
     }
 
     @ToolbarContentBuilder
@@ -134,13 +112,6 @@ struct ContentView: View {
         }
     }
 
-    // MARK: Find
-
-    private func updateMatchCount() {
-        let term = workspace.searchText
-        matchCount = term.isEmpty ? 0 : MarkdownRenderView.matchCount(in: document.text, of: term)
-    }
-
     // MARK: External change reload
 
     private func watchForExternalChanges() async {
@@ -160,42 +131,6 @@ struct ContentView: View {
             document.text = disk
             lastDiskText = disk
         }
-    }
-}
-
-/// A compact find field overlaid on the rendered view.
-private struct FindBar: View {
-    @Binding var text: String
-    var matchCount: Int
-    @FocusState.Binding var focused: Bool
-    var onClose: () -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-            TextField("Find", text: $text)
-                .textFieldStyle(.plain)
-                .focused($focused)
-                .frame(width: 180)
-            if !text.isEmpty {
-                Text(matchCount == 0 ? "Not found" : "\(matchCount)")
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-            }
-            Button(action: onClose) {
-                Image(systemName: "xmark.circle.fill")
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .keyboardShortcut(.cancelAction)
-            .help("Close find")
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(.regularMaterial, in: .rect(cornerRadius: 9))
-        .shadow(color: .black.opacity(0.15), radius: 5, y: 2)
-        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 }
 

@@ -13,8 +13,6 @@ final class DocumentWorkspace {
     var scale: CGFloat = 1
     /// Whether the find UI is showing for this window.
     var isFindPresented = false
-    /// The current find query.
-    var searchText = ""
 
     /// The live document text, kept in sync by `ContentView` for export and
     /// match counting. Bookkeeping for commands, not view state — nothing reads
