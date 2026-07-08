@@ -76,13 +76,15 @@ struct ContentView: View {
         case .split:
             // Live split: rendered preview on top, raw source below. The shared
             // render path updates as the buffer changes, so edits are reflected
-            // immediately without leaving the editor. The editor pane owns the
-            // find bar in this mode.
+            // immediately without leaving the editor. Both panes share the find
+            // state, so Find opens a bar in each — the search term carries
+            // between them through the system find pasteboard.
             VSplitView {
                 MarkdownPreviewView(
                     source: document.text,
                     scale: workspace.scale,
                     showsPlaceholder: false,
+                    isFindPresented: $workspace.isFindPresented,
                 )
                 .frame(minHeight: 120)
                 sourceEditor
