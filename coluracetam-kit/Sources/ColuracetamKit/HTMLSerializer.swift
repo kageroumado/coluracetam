@@ -223,9 +223,10 @@ enum HTMLSerializer {
             let inline = run.inlinePresentationIntent ?? []
             let link = run.link
 
-            if var last = blocks.last, intent == last.intent {
-                last.runs.append((text, inline, link))
-                blocks[blocks.count - 1] = last
+            if !blocks.isEmpty, intent == blocks.last?.intent {
+                // In-place append: copying the element out first would make the
+                // runs buffer non-unique and turn every append into a full copy.
+                blocks[blocks.count - 1].runs.append((text, inline, link))
             } else {
                 blocks.append(LeafBlock(runs: [(text, inline, link)], intent: intent))
             }

@@ -1,12 +1,13 @@
 import AppKit
+import ColuracetamKit
 import SwiftUI
 
 /// A plain-text editor for Markdown source, used as the lower pane of the live
 /// split.
 ///
 /// SwiftUI's `TextEditor` ignores a horizontal content inset, so its text hugs
-/// the edge while the rendered preview above is padded 20 pt — the two panes
-/// don't line up. This AppKit-backed editor sets the text container inset
+/// the edge while the rendered preview above is padded — the two panes don't
+/// line up. This AppKit-backed editor applies ``MarkdownTheme/contentInset``
 /// directly (with zero line-fragment padding) so the source aligns exactly with
 /// the rendered text, draws no background so both panes share the window's, and
 /// lets the surrounding view drive find and initial focus.
@@ -21,10 +22,6 @@ struct MarkdownSourceEditor: NSViewRepresentable {
     var showsLineNumbers = false
     /// A pending go-to-line request; applied once per unique request.
     var lineJump: LineJump?
-
-    /// Matched to ``MarkdownRenderView``'s 20-pt padding so the source text in
-    /// this pane lines up with the rendered text above it.
-    private static let inset: CGFloat = 20
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text, isFindPresented: $isFindPresented)
@@ -42,18 +39,20 @@ struct MarkdownSourceEditor: NSViewRepresentable {
         textView.usesFindBar = true
         textView.isIncrementalSearchingEnabled = true
         textView.drawsBackground = false
-        textView.textContainerInset = NSSize(width: Self.inset, height: Self.inset)
+        textView.textContainerInset = NSSize(
+            width: MarkdownTheme.contentInset, height: MarkdownTheme.contentInset,
+        )
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainer?.widthTracksTextView = true
         textView.font = Self.font(scale: scale)
         textView.string = text
 
-        let scrollView = FindBarObservingScrollView()
+        let scrollView = EditorScrollView()
         scrollView.documentView = textView
         scrollView.hasVerticalScroller = true
         scrollView.drawsBackground = false
         scrollView.onFindBarVisibilityChange = { [coordinator = context.coordinator] visible in
-            coordinator.findBarVisibilityChanged(visible)
+            coordinator.findBar.visibilityChanged(visible)
         }
         scrollView.verticalRulerView = LineNumberRulerView(textView: textView, scrollView: scrollView)
         scrollView.hasVerticalRuler = true
@@ -63,7 +62,9 @@ struct MarkdownSourceEditor: NSViewRepresentable {
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
-        if textView.string != text {
+        // Skip the O(document) text comparison when this update is just the
+        // text view's own edit echoing back through the binding.
+        if !context.coordinator.consumePendingEcho(), textView.string != text {
             textView.string = text
             (scrollView.verticalRulerView as? LineNumberRulerView)?.invalidateLineIndex()
         }
@@ -73,7 +74,7 @@ struct MarkdownSourceEditor: NSViewRepresentable {
         let font = Self.font(scale: scale)
         if textView.font != font { textView.font = font }
         context.coordinator.focusIfNeeded(textView)
-        context.coordinator.syncFind(isFindPresented, in: textView)
+        context.coordinator.findBar.sync(isFindPresented, in: textView)
         if let lineJump {
             context.coordinator.applyIfNeeded(lineJump, in: textView)
         }
@@ -85,44 +86,45 @@ struct MarkdownSourceEditor: NSViewRepresentable {
 
     @MainActor
     final class Coordinator: NSObject, NSTextViewDelegate {
+        let findBar = FindBarPresenter()
+
         private let text: Binding<String>
-        private let isFindPresented: Binding<Bool>
         private var didFocus = false
-        /// Our view of whether the find bar is on screen, kept in step with both
-        /// the binding (writes) and AppKit's own visibility changes (reads), so
-        /// neither path re-issues a redundant show/hide.
-        private var findShown = false
+        /// Set when the buffer write originated from this text view, so the
+        /// next SwiftUI update pass can skip comparing the buffer against its
+        /// own text.
+        private var pendingEcho = false
 
         init(text: Binding<String>, isFindPresented: Binding<Bool>) {
             self.text = text
-            self.isFindPresented = isFindPresented
+            findBar.isPresented = isFindPresented
         }
 
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
+            pendingEcho = true
             text.wrappedValue = textView.string
             (textView.enclosingScrollView?.verticalRulerView as? LineNumberRulerView)?
                 .invalidateLineIndex()
         }
 
+        /// Returns whether an edit echo was pending, clearing it either way.
+        func consumePendingEcho() -> Bool {
+            defer { pendingEcho = false }
+            return pendingEcho
+        }
+
         private var appliedJump: LineJump?
 
         /// Selects and reveals the requested line (clamped to the last line),
-        /// once per unique request.
+        /// once per unique request. Line lookup reuses the ruler's index.
         func applyIfNeeded(_ jump: LineJump, in textView: NSTextView) {
             guard jump != appliedJump else { return }
             appliedJump = jump
 
-            let string = textView.string as NSString
-            var range = NSRange(location: 0, length: 0)
-            var line = 1
-            if string.length > 0 {
-                range = string.lineRange(for: NSRange(location: 0, length: 0))
-                while line < jump.line, NSMaxRange(range) < string.length {
-                    range = string.lineRange(for: NSRange(location: NSMaxRange(range), length: 0))
-                    line += 1
-                }
-            }
+            let ruler = textView.enclosingScrollView?.verticalRulerView as? LineNumberRulerView
+            let range = ruler?.characterRange(ofLine: jump.line)
+                ?? LineIndex(string: textView.string).characterRange(ofLine: jump.line)
             textView.setSelectedRange(range)
             textView.scrollRangeToVisible(range)
             textView.window?.makeFirstResponder(textView)
@@ -135,49 +137,12 @@ struct MarkdownSourceEditor: NSViewRepresentable {
             didFocus = true
             DispatchQueue.main.async { textView.window?.makeFirstResponder(textView) }
         }
-
-        /// Drives the find bar from the shared find state (toolbar / ⌘F).
-        func syncFind(_ presented: Bool, in textView: NSTextView) {
-            guard presented != findShown else { return }
-            findShown = presented
-            let item = NSMenuItem()
-            item.tag = (
-                presented ? NSTextFinder.Action.showFindInterface
-                    : NSTextFinder.Action.hideFindInterface,
-            ).rawValue
-            DispatchQueue.main.async { textView.performTextFinderAction(item) }
-        }
-
-        /// Reports a find-bar visibility change that AppKit made itself — most
-        /// importantly the user dismissing the bar — back into the shared state.
-        func findBarVisibilityChanged(_ visible: Bool) {
-            guard visible != findShown else { return }
-            findShown = visible
-            if isFindPresented.wrappedValue != visible {
-                isFindPresented.wrappedValue = visible
-            }
-        }
     }
 }
 
-/// An `NSScrollView` that reports find-bar visibility changes.
-///
-/// `NSTextView` hosts its find bar in the enclosing scroll view (its
-/// `NSTextFinderBarContainer`), so overriding the visibility setter is the one
-/// place that sees *every* change — including the user closing the bar — which
-/// the text view otherwise keeps to itself.
-private final class FindBarObservingScrollView: NSScrollView {
-    var onFindBarVisibilityChange: (@MainActor (Bool) -> Void)?
-
-    override var isFindBarVisible: Bool {
-        get { super.isFindBarVisible }
-        set {
-            guard newValue != super.isFindBarVisible else { return }
-            super.isFindBarVisible = newValue
-            onFindBarVisibilityChange?(newValue)
-        }
-    }
-
+/// The editor's scroll view: the kit's find-bar reporting, plus ruler
+/// placement that respects the title-bar underlap.
+private final class EditorScrollView: FindBarObservingScrollView {
     /// The scroll view underlaps the title bar (content scrolls beneath the
     /// toolbar, offset via automatic content insets), but `tile()` places the
     /// ruler over the full frame height — under the traffic lights. Push it

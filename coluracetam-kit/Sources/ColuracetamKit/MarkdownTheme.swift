@@ -6,7 +6,13 @@ import AppKit
 ///
 /// Every color is appearance-dynamic (resolved at draw time), so a light/dark
 /// switch re-renders correctly without rebuilding the attributed string.
-nonisolated enum MarkdownTheme {
+nonisolated public enum MarkdownTheme {
+    /// The edge inset, in points, around rendered document content.
+    ///
+    /// Public because the app's source editor applies the same inset so the
+    /// source pane lines up exactly with the preview pane in the split view.
+    public static let contentInset: CGFloat = 20
+
     // MARK: Colors (values lifted from Textual's DynamicColor+GitHub)
 
     static let primary = dynamic(
@@ -69,7 +75,7 @@ nonisolated enum MarkdownTheme {
     /// ``codeBlockPadding`` above and below the text.
     ///
     /// Shared by the drawing (`MarkdownLayoutManager`) and hover hit-testing
-    /// (`MarkdownReaderTextView`) so the two can never disagree. The paragraph
+    /// (`MarkdownPreviewTextView`) so the two can never disagree. The paragraph
     /// spacing in ``MarkdownTextStyler`` reserves exactly this overhang plus
     /// the standard block gap.
     static func codeChipRect(textRect: NSRect, containerWidth: CGFloat) -> NSRect {

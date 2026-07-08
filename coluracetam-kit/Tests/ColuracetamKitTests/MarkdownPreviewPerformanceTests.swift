@@ -9,8 +9,8 @@ import Testing
 /// for a debounce window), and first-paint layout (must be viewport-lazy, not
 /// whole-document).
 @MainActor
-@Suite("Reader performance")
-struct MarkdownReaderPerformanceTests {
+@Suite("Preview performance")
+struct MarkdownPreviewPerformanceTests {
     /// ~400 KB / ~8k lines of heading/list/code/table/quote-heavy Markdown,
     /// mirroring the benchmark file from the profiling session.
     private static let heavyDocument: String = {

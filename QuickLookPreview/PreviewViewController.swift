@@ -16,7 +16,7 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         // renders the text over its translucent window material (a semitransparent
         // gray), unlike the system's plain-text reader. `.textBackgroundColor`
         // adapts to light/dark to match the rendered content.
-        let root = MarkdownRenderView(source: source)
+        let root = MarkdownPreviewView(source: source)
             .background(Color(nsColor: .textBackgroundColor))
         let hosting = NSHostingController(rootView: root)
         addChild(hosting)

@@ -10,7 +10,8 @@ import AppKit
 /// Clicking a line number selects that whole line; dragging extends the
 /// selection over every line the drag sweeps (in either direction).
 final class LineNumberRulerView: NSRulerView {
-    private var lineStarts: [Int] = [0]
+    private var lineIndex = LineIndex()
+    private var lineIndexIsStale = true
     /// The line range where a ruler drag began, unioned with the line under
     /// the cursor as the drag moves.
     private var dragAnchor: NSRange?
@@ -22,7 +23,6 @@ final class LineNumberRulerView: NSRulerView {
     init(textView: NSTextView, scrollView: NSScrollView) {
         super.init(scrollView: scrollView, orientation: .verticalRuler)
         clientView = textView
-        invalidateLineIndex()
     }
 
     @available(*, unavailable)
@@ -30,22 +30,29 @@ final class LineNumberRulerView: NSRulerView {
         fatalError("init(coder:) is not supported")
     }
 
-    /// Re-indexes line starts after an edit. O(text length), run per change.
+    /// Marks the line index stale after an edit. O(1) — the O(text length)
+    /// re-index happens lazily on the next lookup, so typing with the ruler
+    /// hidden never pays for it.
     func invalidateLineIndex() {
-        guard let string = textView?.string else { return }
-        var starts: [Int] = [0]
-        let ns = string as NSString
-        var index = 0
-        while index < ns.length {
-            let lineRange = ns.lineRange(for: NSRange(location: index, length: 0))
-            index = NSMaxRange(lineRange)
-            if index < ns.length { starts.append(index) }
-        }
-        lineStarts = starts
-
-        let digits = max(2, String(starts.count).count)
-        ruleThickness = CGFloat(digits) * Self.digitWidth + Self.padding * 2
+        lineIndexIsStale = true
         needsDisplay = true
+    }
+
+    /// The character range of `line` (1-based, clamped to the last line).
+    /// Shared with go-to-line so it reuses the ruler's index.
+    func characterRange(ofLine line: Int) -> NSRange {
+        ensureLineIndex()
+        return lineIndex.characterRange(ofLine: line)
+    }
+
+    private func ensureLineIndex() {
+        guard lineIndexIsStale, let string = textView?.string else { return }
+        lineIndexIsStale = false
+        lineIndex = LineIndex(string: string)
+
+        let digits = max(2, String(lineIndex.lineCount).count)
+        let thickness = CGFloat(digits) * Self.digitWidth + Self.padding * 2
+        if ruleThickness != thickness { ruleThickness = thickness }
     }
 
     /// `NSRulerView`'s default drawing paints a background and a hairline along
@@ -63,6 +70,7 @@ final class LineNumberRulerView: NSRulerView {
               let layoutManager = textView.textLayoutManager,
               let contentManager = layoutManager.textContentManager
         else { return }
+        ensureLineIndex()
 
         let visible = textView.visibleRect
         let font = NSFont.monospacedDigitSystemFont(
@@ -87,7 +95,7 @@ final class LineNumberRulerView: NSRulerView {
                 from: contentManager.documentRange.location,
                 to: fragment.rangeInElement.location,
             )
-            let line = lineNumber(forCharacterAt: offset)
+            let line = lineIndex.lineNumber(forCharacterAt: offset)
             let label = NSAttributedString(string: "\(line)", attributes: attributes)
             let size = label.size()
 
@@ -167,16 +175,6 @@ final class LineNumberRulerView: NSRulerView {
         let string = textView.string as NSString
         guard offset <= string.length else { return nil }
         return string.lineRange(for: NSRange(location: offset, length: 0))
-    }
-
-    private func lineNumber(forCharacterAt offset: Int) -> Int {
-        var low = 0
-        var high = lineStarts.count - 1
-        while low < high {
-            let mid = (low + high + 1) / 2
-            if lineStarts[mid] <= offset { low = mid } else { high = mid - 1 }
-        }
-        return low + 1
     }
 
     private static let digitWidth: CGFloat = 7

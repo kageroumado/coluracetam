@@ -35,16 +35,11 @@ struct ContentView: View {
     }
 
     var body: some View {
+        @Bindable var workspace = workspace
         content
             .toolbar { toolbarContent }
-            .alert("Go to Line", isPresented: Binding(
-                get: { workspace.isGoToLinePresented },
-                set: { workspace.isGoToLinePresented = $0 },
-            )) {
-                TextField("Line number", text: Binding(
-                    get: { workspace.goToLineText },
-                    set: { workspace.goToLineText = $0 },
-                ))
+            .alert("Go to Line", isPresented: $workspace.isGoToLinePresented) {
+                TextField("Line number", text: $workspace.goToLineText)
                 Button("Go") { goToLine() }
                     .keyboardShortcut(.defaultAction)
                 Button("Cancel", role: .cancel) {}
@@ -66,15 +61,13 @@ struct ContentView: View {
 
     @ViewBuilder
     private var content: some View {
+        @Bindable var workspace = workspace
         switch mode {
         case .preview:
-            MarkdownRenderView(
+            MarkdownPreviewView(
                 source: document.text,
                 scale: workspace.scale,
-                isFindPresented: Binding(
-                    get: { workspace.isFindPresented },
-                    set: { workspace.isFindPresented = $0 },
-                ),
+                isFindPresented: $workspace.isFindPresented,
             )
         case .split:
             // Live split: rendered preview on top, raw source below. The shared
@@ -82,7 +75,7 @@ struct ContentView: View {
             // immediately without leaving the editor. The editor pane owns the
             // find bar in this mode.
             VSplitView {
-                MarkdownRenderView(
+                MarkdownPreviewView(
                     source: document.text,
                     scale: workspace.scale,
                     showsPlaceholder: false,
@@ -97,13 +90,11 @@ struct ContentView: View {
     }
 
     private var sourceEditor: some View {
-        MarkdownSourceEditor(
+        @Bindable var workspace = workspace
+        return MarkdownSourceEditor(
             text: $document.text,
             scale: workspace.scale,
-            isFindPresented: Binding(
-                get: { workspace.isFindPresented },
-                set: { workspace.isFindPresented = $0 },
-            ),
+            isFindPresented: $workspace.isFindPresented,
             showsLineNumbers: showsLineNumbers,
             lineJump: workspace.lineJump,
         )
@@ -168,9 +159,12 @@ struct ContentView: View {
     }
 
     /// Reloads from disk when the buffer has no unsaved edits; otherwise keeps
-    /// the user's in-progress edits rather than clobbering them.
+    /// the user's in-progress edits rather than clobbering them. Decoding goes
+    /// through the document's fallback chain so a file that needed a fallback
+    /// to open keeps live-reloading.
     private func reload(from url: URL) {
-        guard let disk = try? String(contentsOf: url, encoding: .utf8) else { return }
+        guard let data = try? Data(contentsOf: url) else { return }
+        let disk = ColuracetamDocument.decode(data)
         if disk == document.text {
             lastDiskText = disk
         } else if document.text == lastDiskText {

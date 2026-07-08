@@ -28,12 +28,16 @@ nonisolated struct ColuracetamDocument: FileDocument {
     /// (possibly imperfectly) instead of failing: UTF-8 first, UTF-16 when a
     /// byte-order mark says so, Latin-1 (which accepts any byte) last.
     /// Documents are always *saved* as UTF-8.
-    private static func decode(_ data: Data) -> String {
+    ///
+    /// Shared with the external-change reload so a file that needed a fallback
+    /// to open keeps live-reloading through the same fallbacks.
+    static func decode(_ data: Data) -> String {
         if let utf8 = String(data: data, encoding: .utf8) { return utf8 }
         let hasUTF16BOM = data.count >= 2 &&
             ((data[0] == 0xFF && data[1] == 0xFE) || (data[0] == 0xFE && data[1] == 0xFF))
         if hasUTF16BOM, let utf16 = String(data: data, encoding: .utf16) { return utf16 }
-        return String(data: data, encoding: .isoLatin1) ?? String(decoding: data, as: UTF8.self)
+        // Latin-1 maps every byte, so this cannot fail.
+        return String(data: data, encoding: .isoLatin1) ?? ""
     }
 
     func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {

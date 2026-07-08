@@ -1,6 +1,6 @@
 import AppKit
 
-/// The reader's text view: adds hover affordances on top of `NSTextView` —
+/// The preview's text view: adds hover affordances on top of `NSTextView` —
 /// a copy button on code blocks and a browser-style URL pill for links.
 ///
 /// Both affordances are driven by mouse tracking against TextKit geometry:
@@ -8,7 +8,7 @@ import AppKit
 /// its attributes decide what to show. The copy button lives inside the text
 /// view (it belongs to a chip and scrolls with it); the URL pill is pinned to
 /// the enclosing scroll view's bottom-left like a browser status pill.
-final class MarkdownReaderTextView: NSTextView {
+final class MarkdownPreviewTextView: NSTextView {
     /// Reports the link under the mouse (or `nil`), for a browser-style URL
     /// pill rendered by the SwiftUI layer — called only on changes.
     var linkHoverChanged: ((URL?) -> Void)?
