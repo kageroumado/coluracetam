@@ -9,6 +9,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillFinishLaunching(_: Notification) {
         NSApp.servicesProvider = services
+
+        // Testing hook: launch with `-ForcedAppearance dark|light` to pin the
+        // app's appearance (screenshots, theme checks) without changing the
+        // system-wide setting.
+        if let forced = UserDefaults.standard.string(forKey: "ForcedAppearance") {
+            NSApp.appearance = NSAppearance(named: forced == "dark" ? .darkAqua : .aqua)
+        }
     }
 
     func applicationDidFinishLaunching(_: Notification) {
