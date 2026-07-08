@@ -1,5 +1,4 @@
 import SwiftUI
-import Textual
 
 /// Renders a Finder-thumbnail image of a Markdown document.
 ///
@@ -71,11 +70,8 @@ public enum MarkdownThumbnail {
             .joined(separator: "\n")
 
         // Synchronous parse — strips syntax and applies inline styling (bold,
-        // italic, inline code) without the `StructuredText` @State indirection.
-        guard let parsed = try? AttributedStringMarkdownParser(baseURL: nil)
-            .attributedString(for: head)
-        else { return nil }
-        let attributed = blockStyled(parsed)
+        // italic, inline code); `Text` can render it directly.
+        let attributed = blockStyled(MarkdownTextStyler.parse(markdown: head))
 
         // Lay the page out at a fixed reference size whose aspect matches the
         // request, then let the caller scale the bitmap down to the icon size.

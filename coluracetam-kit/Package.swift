@@ -17,15 +17,9 @@ let package = Package(
     products: [
         .library(name: "ColuracetamKit", targets: ["ColuracetamKit"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/gonzalezreal/textual", from: "0.5.0"),
-    ],
     targets: [
         .target(
             name: "ColuracetamKit",
-            dependencies: [
-                .product(name: "Textual", package: "textual"),
-            ],
             swiftSettings: swiftSettings,
         ),
         .testTarget(

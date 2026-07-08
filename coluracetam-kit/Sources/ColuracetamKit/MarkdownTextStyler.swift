@@ -16,14 +16,20 @@ import AppKit
 nonisolated public enum MarkdownTextStyler {
     /// Parses and styles `markdown` at the given reading-comfort `scale`.
     public static func attributedString(markdown: String, scale: CGFloat = 1) -> NSAttributedString {
+        Renderer(scale: scale).render(parse(markdown: markdown))
+    }
+
+    /// Parses Markdown into an `AttributedString` with `presentationIntent`
+    /// block structure (cmark-gfm via Foundation). Shared by the styler, the
+    /// HTML serializer, and the thumbnail renderer.
+    static func parse(markdown: String) -> AttributedString {
         let options = AttributedString.MarkdownParsingOptions(
             allowsExtendedAttributes: true,
             interpretedSyntax: .full,
             failurePolicy: .returnPartiallyParsedIfPossible,
         )
-        let parsed = (try? AttributedString(markdown: markdown, options: options, baseURL: nil))
+        return (try? AttributedString(markdown: markdown, options: options, baseURL: nil))
             ?? AttributedString(markdown)
-        return Renderer(scale: scale).render(parsed)
     }
 }
 
