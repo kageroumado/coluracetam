@@ -104,6 +104,40 @@ private struct DocumentCommands: Commands {
             .keyboardShortcut("t", modifiers: [.command, .control])
         }
 
+        // Refrax-style window options: pin, translucency, and size presets —
+        // handy for keeping a note floating over other work. Pin and opacity
+        // go through the focused workspace (not NSApp.keyWindow directly) so
+        // the menu checkmarks are observable and stay current.
+        CommandGroup(after: .windowSize) {
+            Divider()
+            Toggle(isOn: Binding(
+                get: { workspace?.isPinned ?? false },
+                set: { workspace?.isPinned = $0 },
+            )) {
+                Label("Keep on Top", systemImage: "pin")
+            }
+            .disabled(workspace == nil)
+            Picker(selection: Binding(
+                get: { workspace?.opacity ?? .full },
+                set: { workspace?.opacity = $0 },
+            )) {
+                ForEach(WindowOpacity.allCases, id: \.self) { opacity in
+                    Text(opacity.title).tag(opacity)
+                }
+            } label: {
+                Label("Window Opacity", systemImage: "circle.lefthalf.filled")
+            }
+            .pickerStyle(.menu)
+            .disabled(workspace == nil)
+            Menu {
+                ForEach(Self.sizePresets, id: \.title) { preset in
+                    Button(preset.title) { resizeKeyWindow(to: preset.size) }
+                }
+            } label: {
+                Label("Quick Resize", systemImage: "aspectratio")
+            }
+        }
+
         CommandGroup(after: .importExport) {
             Button {
                 workspace?.exportPDF()
@@ -131,6 +165,31 @@ private struct DocumentCommands: Commands {
             .keyboardShortcut("p", modifiers: .command)
             .disabled(workspace == nil)
         }
+    }
+
+    /// Quick Resize presets: typical web content widths, since documents are
+    /// mostly read at web-page proportions — the width is what matters, and
+    /// the height follows the app's letter-ish default aspect (720 × 900).
+    private static let sizePresets: [(title: String, size: NSSize)] = [
+        ("640 × 800", NSSize(width: 640, height: 800)),
+        ("720 × 900 (Default)", NSSize(width: 720, height: 900)),
+        ("960 × 1200", NSSize(width: 960, height: 1_200)),
+        ("1200 × 1500", NSSize(width: 1_200, height: 1_500)),
+    ]
+
+    /// Resizes the key window, keeping its top-left corner fixed (so the
+    /// title bar doesn't jump) and clamping to the screen's visible area.
+    private func resizeKeyWindow(to size: NSSize) {
+        guard let window = NSApp.keyWindow else { return }
+        var target = size
+        if let screen = window.screen?.visibleFrame {
+            target.width = min(target.width, screen.width)
+            target.height = min(target.height, screen.height)
+        }
+        var frame = window.frame
+        frame.origin.y += frame.height - target.height
+        frame.size = target
+        window.setFrame(frame, display: true, animate: true)
     }
 
     /// Opens a new untitled document as a *tab* of the key window: the window

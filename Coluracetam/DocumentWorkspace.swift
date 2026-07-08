@@ -24,6 +24,22 @@ final class DocumentWorkspace {
     @ObservationIgnored var replaceText: ((String) -> Void)?
     /// The document's file URL, when saved to disk. Bookkeeping for export.
     @ObservationIgnored var fileURL: URL?
+    /// The window hosting this workspace's view, set by `ContentView`. Target
+    /// for window options (pin, opacity). Bookkeeping, not view state.
+    @ObservationIgnored weak var window: NSWindow?
+
+    // MARK: Window options
+
+    /// Whether the window floats above normal windows — handy for keeping a
+    /// note visible over other work.
+    var isPinned = false {
+        didSet { window?.level = isPinned ? .floating : .normal }
+    }
+
+    /// The window's translucency preset.
+    var opacity: WindowOpacity = .full {
+        didSet { window?.alphaValue = opacity.alpha }
+    }
 
     // MARK: Zoom
 
@@ -133,6 +149,29 @@ final class DocumentWorkspace {
 private extension CGFloat {
     func rounded(toMultipleOf m: CGFloat) -> CGFloat {
         (self / m).rounded() * m
+    }
+}
+
+/// The Window Opacity presets, mirroring Refrax's 100/80/60/40 steps.
+enum WindowOpacity: CaseIterable {
+    case full, high, medium, low
+
+    var alpha: CGFloat {
+        switch self {
+        case .full: 1
+        case .high: 0.8
+        case .medium: 0.6
+        case .low: 0.4
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .full: "100% (Opaque)"
+        case .high: "80%"
+        case .medium: "60%"
+        case .low: "40%"
+        }
     }
 }
 

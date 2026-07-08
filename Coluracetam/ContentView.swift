@@ -37,6 +37,9 @@ struct ContentView: View {
     var body: some View {
         @Bindable var workspace = workspace
         content
+            // Floor for window resizing: below this the layout (toolbar,
+            // split panes, insets) stops making sense.
+            .frame(minWidth: 160, minHeight: 160)
             .toolbar { toolbarContent }
             .alert("Go to Line", isPresented: $workspace.isGoToLinePresented) {
                 TextField("Line number", text: $workspace.goToLineText)
@@ -55,6 +58,7 @@ struct ContentView: View {
                 workspace.fileURL = fileURL
                 workspace.replaceText = { document.text = $0 }
             }
+            .background(WindowReader { workspace.window = $0 })
     }
 
     // MARK: Content
@@ -171,6 +175,22 @@ struct ContentView: View {
             document.text = disk
             lastDiskText = disk
         }
+    }
+}
+
+/// Reports the `NSWindow` hosting this view — SwiftUI offers no direct way to
+/// reach it, and the workspace needs it to apply window options (pin, opacity).
+private struct WindowReader: NSViewRepresentable {
+    let onWindow: (NSWindow?) -> Void
+
+    func makeNSView(context _: Context) -> NSView {
+        NSView()
+    }
+
+    func updateNSView(_ view: NSView, context _: Context) {
+        // `view.window` is nil during the first update; report asynchronously
+        // once the view lands in its window.
+        DispatchQueue.main.async { [onWindow] in onWindow(view.window) }
     }
 }
 
