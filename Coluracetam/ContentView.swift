@@ -178,9 +178,34 @@ struct ContentView: View {
         let disk = ColuracetamDocument.decode(data)
         if disk == document.text {
             lastDiskText = disk
+            acceptExternalChange(at: url)
         } else if document.text == lastDiskText {
             document.text = disk
             lastDiskText = disk
+            acceptExternalChange(at: url)
+        }
+    }
+
+    /// Tells the NSDocument machinery that the on-disk change has been
+    /// deliberately absorbed. Writing the reloaded text into the binding marks
+    /// the document edited, so its next autosave would compare its stale
+    /// `fileModificationDate` against the externally changed file and raise
+    /// the "changed by another application" conflict alert — for a change the
+    /// user never made. Adopting the file's current date (and, once the
+    /// binding write has settled, clearing the change count, since buffer and
+    /// disk are identical) keeps the reload silent.
+    private func acceptExternalChange(at url: URL) {
+        guard let nsDocument = NSDocumentController.shared.document(for: url) else { return }
+        let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+        if let date = values?.contentModificationDate {
+            nsDocument.fileModificationDate = date
+        }
+        // The SwiftUI document bridge registers the binding write as an edit
+        // asynchronously; clear it after that has happened.
+        DispatchQueue.main.async {
+            if document.text == lastDiskText {
+                nsDocument.updateChangeCount(.changeCleared)
+            }
         }
     }
 }
