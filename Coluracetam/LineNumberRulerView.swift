@@ -78,7 +78,7 @@ final class LineNumberRulerView: NSRulerView {
         )
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: NSColor.tertiaryLabelColor,
+            .foregroundColor: NSColor.secondaryLabelColor,
         ]
 
         // Walk only the layout fragments intersecting the viewport.

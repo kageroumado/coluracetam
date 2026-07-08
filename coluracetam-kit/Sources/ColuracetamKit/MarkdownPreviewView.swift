@@ -145,6 +145,7 @@ private struct PreviewSurface: NSViewRepresentable {
             coordinator.findBar.visibilityChanged(visible)
         }
         context.coordinator.findBar.isPresented = isFindPresented
+        context.coordinator.observeAccessibilityDisplayChanges(for: textView)
         return scrollView
     }
 
@@ -168,6 +169,32 @@ private struct PreviewSurface: NSViewRepresentable {
         private var appliedScale: CGFloat?
         private var generation = 0
         private var restyleTask: Task<Void, Never>?
+        private var accessibilityObserver: NSObjectProtocol?
+
+        /// Restyles the current document when the system accessibility
+        /// display options change — link styling depends on Differentiate
+        /// Without Color, so a live toggle must not leave stale rendering.
+        func observeAccessibilityDisplayChanges(for textView: NSTextView) {
+            guard accessibilityObserver == nil else { return }
+            accessibilityObserver = NSWorkspace.shared.notificationCenter.addObserver(
+                forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
+                object: nil,
+                queue: .main,
+            ) { [weak self, weak textView] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let textView, let source = self.appliedSource else { return }
+                    let scale = self.appliedScale ?? 1
+                    self.appliedSource = nil
+                    self.setContent(source: source, scale: scale, in: textView)
+                }
+            }
+        }
+
+        isolated deinit {
+            if let accessibilityObserver {
+                NSWorkspace.shared.notificationCenter.removeObserver(accessibilityObserver)
+            }
+        }
 
         /// Styles and applies new content.
         ///

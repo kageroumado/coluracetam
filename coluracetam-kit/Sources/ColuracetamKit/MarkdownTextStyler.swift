@@ -225,6 +225,11 @@ nonisolated private struct Renderer {
         if let url = run.link {
             attributes[.link] = url
             color = MarkdownTheme.link
+            // Links are otherwise distinguished by color alone; honor the
+            // system-wide Differentiate Without Color accessibility setting.
+            if NSWorkspace.shared.accessibilityDisplayShouldDifferentiateWithoutColor {
+                attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue
+            }
         }
 
         attributes[.font] = font

@@ -122,15 +122,21 @@ struct ContentView: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .principal) {
             Picker("View Mode", selection: $mode) {
+                // Segmented toolbar pickers drop the Label title from the
+                // accessibility tree and fall back to the SF Symbol name, so
+                // each segment needs an explicit accessibility label.
                 Label("Preview", systemImage: "doc.richtext")
                     .tag(ViewMode.preview)
                     .help("Show the preview")
+                    .accessibilityLabel("Preview")
                 Label("Split", systemImage: "rectangle.split.1x2")
                     .tag(ViewMode.split)
                     .help("Show the preview and the source")
+                    .accessibilityLabel("Split")
                 Label("Edit", systemImage: "square.and.pencil")
                     .tag(ViewMode.edit)
                     .help("Show the source")
+                    .accessibilityLabel("Edit")
             }
             .pickerStyle(.segmented)
         }
