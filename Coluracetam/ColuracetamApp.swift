@@ -98,7 +98,10 @@ private struct DocumentCommands: Commands {
             } label: {
                 Label("Show or Hide Toolbar", systemImage: "rectangle.topthird.inset.filled")
             }
-            .keyboardShortcut("t", modifiers: [.command, .option])
+            // Not Finder's ⌥⌘T: something system-side consumes that chord
+            // before apps ever see it (verified with an event monitor), and
+            // SwiftUI menus can't match Option-transformed equivalents anyway.
+            .keyboardShortcut("t", modifiers: [.command, .control])
         }
 
         CommandGroup(after: .importExport) {
@@ -114,7 +117,12 @@ private struct DocumentCommands: Commands {
                 Label("Export as HTML…", systemImage: "chevron.left.forwardslash.chevron.right")
             }
             .disabled(workspace == nil)
-            Divider()
+        }
+
+        // Replace (not augment) the default print commands: DocumentGroup's
+        // built-in Print… routes to NSDocument's unimplemented printDocument:
+        // ("This application does not support printing.") and owns ⌘P.
+        CommandGroup(replacing: .printItem) {
             Button {
                 workspace?.printDocument()
             } label: {
@@ -135,3 +143,4 @@ private struct DocumentCommands: Commands {
         DispatchQueue.main.async { keyWindow?.tabbingMode = .automatic }
     }
 }
+

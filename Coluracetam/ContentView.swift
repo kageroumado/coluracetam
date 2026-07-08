@@ -135,6 +135,10 @@ struct ContentView: View {
         ToolbarItem(placement: .primaryAction) {
             shareButton
         }
+        // Search is navigation, Share is an action — the HIG wants them in
+        // visually separate sections; a fixed spacer is Liquid Glass's
+        // standard small separator between platters.
+        ToolbarSpacer(.fixed, placement: .primaryAction)
         ToolbarItem(placement: .primaryAction) {
             Button {
                 workspace.toggleFind()

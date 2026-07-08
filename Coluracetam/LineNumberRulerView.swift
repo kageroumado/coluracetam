@@ -48,6 +48,16 @@ final class LineNumberRulerView: NSRulerView {
         needsDisplay = true
     }
 
+    /// `NSRulerView`'s default drawing paints a background and a hairline along
+    /// the ruler's edge for the ruler's full height — chrome that reads as
+    /// noise next to a background-less editor. Draw only the labels; the 6-pt
+    /// padding on either side separates the gutter from the text on its own.
+    override func draw(_ dirtyRect: NSRect) {
+        drawHashMarksAndLabels(in: dirtyRect)
+    }
+
+    override var isOpaque: Bool { false }
+
     override func drawHashMarksAndLabels(in rect: NSRect) {
         guard let textView,
               let layoutManager = textView.textLayoutManager,
