@@ -54,6 +54,11 @@ struct ContentView: View {
             .onChange(of: fileURL) { _, url in workspace.fileURL = url }
             .task(id: fileURL) { await watchForExternalChanges() }
             .onAppear {
+                // Seed an untitled document created by a service or App Intent
+                // with its pending content (see ServiceProvider.pendingText).
+                if document.text.isEmpty, let pending = ServiceProvider.takePendingText() {
+                    document.text = pending
+                }
                 workspace.source = document.text
                 workspace.fileURL = fileURL
                 workspace.replaceText = { document.text = $0 }

@@ -2,6 +2,8 @@ import SwiftUI
 
 @main
 struct ColuracetamApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     var body: some Scene {
         DocumentGroup(newDocument: ColuracetamDocument()) { file in
             ContentView(document: file.$document)
