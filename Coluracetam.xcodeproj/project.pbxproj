@@ -552,7 +552,7 @@
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Coluracetam/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 kagerou.glass";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "The print panel searches the local network for nearby printers.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -598,7 +598,7 @@
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Coluracetam/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 kagerou.glass";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "The print panel searches the local network for nearby printers.";
 				LD_RUNPATH_SEARCH_PATHS = (
