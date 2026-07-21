@@ -12,7 +12,7 @@
 [![@kageroumado](https://img.shields.io/badge/@kageroumado-76e6e0?style=for-the-badge&logo=x&logoColor=0d0a10)](https://x.com/kageroumado)
 [![macOS Tahoe](https://img.shields.io/badge/macOS-Tahoe_26%2B-0d0a10?style=for-the-badge&logo=apple&logoColor=white)](#requirements)
 
-<a href="https://apps.apple.com/us/app/coluracetam-markdown-reader/id6788680916?mt=12"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-mac-app-store/black/en-us" alt="Download on the Mac App Store" height="48"></a>
+<a href="https://apps.apple.com/app/apple-store/id6788680916?pt=128650112&ct=GitHub&mt=8"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-mac-app-store/black/en-us" alt="Download on the Mac App Store" height="48"></a>
 
 <table>
   <tr>
@@ -60,7 +60,7 @@ want to write, toggle the live split: rendered preview on top, raw source below,
 
 ## Download
 
-- **[Mac App Store](https://apps.apple.com/us/app/coluracetam-markdown-reader/id6788680916?mt=12)** — $4.99. The same reader, sandboxed and updated through the store. Since the DMG below is free, buying this copy is a deliberate act: it pays for the hours this app took and the apps that come next. If that's the copy on your Mac — thank you. ♡
+- **[Mac App Store](https://apps.apple.com/app/apple-store/id6788680916?pt=128650112&ct=GitHub&mt=8)** — $4.99. The same reader, sandboxed and updated through the store. Since the DMG below is free, buying this copy is a deliberate act: it pays for the hours this app took and the apps that come next. If that's the copy on your Mac — thank you. ♡
 - **[GitHub Releases](https://github.com/kageroumado/coluracetam/releases/latest)** — free, MIT, notarized DMG.
 
 Or build it yourself — it's a single Run in Xcode.
