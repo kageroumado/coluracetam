@@ -12,6 +12,8 @@
 [![@kageroumado](https://img.shields.io/badge/@kageroumado-76e6e0?style=for-the-badge&logo=x&logoColor=0d0a10)](https://x.com/kageroumado)
 [![macOS Tahoe](https://img.shields.io/badge/macOS-Tahoe_26%2B-0d0a10?style=for-the-badge&logo=apple&logoColor=white)](#requirements)
 
+<a href="https://apps.apple.com/us/app/coluracetam-markdown-reader/id6788680916?mt=12"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-mac-app-store/black/en-us" alt="Download on the Mac App Store" height="48"></a>
+
 <table>
   <tr>
     <td align="center"><img src=".github/coluracetam-rendered.png" alt="Rendered Markdown" width="420"><br><sub><b>rendered</b> ・ press space, read it in color</sub></td>
@@ -56,9 +58,12 @@ want to write, toggle the live split: rendered preview on top, raw source below,
 - **macOS Tahoe 26.4.** That's what I build and test on; it likely runs on earlier 26.x, but I haven't tested it there.
 - **Xcode 26+** to build, with Swift 6 strict concurrency enabled.
 
-## Releases
+## Download
 
-Notarized builds will be posted on the **[Releases](https://github.com/kageroumado/coluracetam/releases)** page. Until then, build it yourself — it's a single Run in Xcode.
+- **[Mac App Store](https://apps.apple.com/us/app/coluracetam-markdown-reader/id6788680916?mt=12)** — $4.99. The same reader, sandboxed and updated through the store. Since the DMG below is free, buying this copy is a deliberate act: it pays for the hours this app took and the apps that come next. If that's the copy on your Mac — thank you. ♡
+- **[GitHub Releases](https://github.com/kageroumado/coluracetam/releases/latest)** — free, MIT, notarized DMG.
+
+Or build it yourself — it's a single Run in Xcode.
 
 ## Building
 
