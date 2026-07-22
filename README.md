@@ -62,6 +62,7 @@ want to write, toggle the live split: rendered preview on top, raw source below,
 
 - **[Mac App Store](https://apps.apple.com/app/apple-store/id6788680916?pt=128650112&ct=GitHub&mt=8)** — $4.99. The same reader, sandboxed and updated through the store. Since the DMG below is free, buying this copy is a deliberate act: it pays for the hours this app took and the apps that come next. If that's the copy on your Mac — thank you. ♡
 - **[GitHub Releases](https://github.com/kageroumado/coluracetam/releases/latest)** — free, MIT, notarized DMG.
+- **Homebrew** — `brew install --cask kageroumado/tap/coluracetam` — the same free DMG, via [my tap](https://github.com/kageroumado/homebrew-tap). The fully qualified name auto-trusts the cask under Homebrew 6's tap-trust system.
 
 Or build it yourself — it's a single Run in Xcode.
 
