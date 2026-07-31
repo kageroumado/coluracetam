@@ -7,6 +7,9 @@ xcuserdata/
 DerivedData/
 build/
 
+# Coverage residue from ad-hoc profiling runs
+*.profraw
+
 # Swift Package Manager
 .build/
 .swiftpm/
