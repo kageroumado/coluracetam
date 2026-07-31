@@ -52,7 +52,18 @@ final class LineNumberRulerView: NSRulerView {
 
         let digits = max(2, String(lineIndex.lineCount).count)
         let thickness = CGFloat(digits) * Self.digitWidth + Self.padding * 2
-        if ruleThickness != thickness { ruleThickness = thickness }
+        if ruleThickness != thickness {
+            // Setting `ruleThickness` retiles the scroll view, which resizes
+            // the width-tracking text container. Doing that here — this runs
+            // inside `drawHashMarksAndLabels`, mid TextKit 2 layout pass —
+            // invalidates the freshly computed layout, and the full-document
+            // height estimation never reruns: the text view's frame stays at
+            // viewport height and the editor cannot scroll at all. Defer the
+            // retile until after the draw pass.
+            DispatchQueue.main.async { [self] in
+                if ruleThickness != thickness { ruleThickness = thickness }
+            }
+        }
     }
 
     /// `NSRulerView`'s default drawing paints a background and a hairline along
