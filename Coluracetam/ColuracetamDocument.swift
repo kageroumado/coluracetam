@@ -1,3 +1,4 @@
+import ColuracetamKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -24,6 +25,16 @@ nonisolated struct ColuracetamDocument: FileDocument {
         text = Self.decode(data)
     }
 
+    /// Converts PDF bytes to Markdown, refusing documents with no usable
+    /// text layer instead of opening an empty or garbled window.
+    static func importPDF(_ data: Data) throws -> String {
+        let result = try PDFImporter.convert(data)
+        guard let markdown = result.markdown, !result.needsOCR else {
+            throw PDFImportUnsupportedError(result: result)
+        }
+        return markdown
+    }
+
     /// Decodes file bytes with graceful fallbacks so an unusual encoding opens
     /// (possibly imperfectly) instead of failing: UTF-8 first, UTF-16 when a
     /// byte-order mark says so, Latin-1 (which accepts any byte) last.
@@ -42,5 +53,48 @@ nonisolated struct ColuracetamDocument: FileDocument {
 
     func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {
         FileWrapper(regularFileWithContents: Data(text.utf8))
+    }
+}
+
+/// Read-only shell document that owns the `.pdf` type: an *editor*
+/// DocumentGroup silently refuses types outside its writable set (the Open
+/// panel greys them out), so PDFs enter through a `DocumentGroup(viewing:)`
+/// scene instead. It converts on read; the scene's view then immediately
+/// re-opens the Markdown as a new untitled ``ColuracetamDocument``, so the
+/// source PDF is never a save target.
+nonisolated struct PDFImportDocument: FileDocument {
+    let markdown: String
+
+    static let readableContentTypes: [UTType] = [.pdf]
+
+    init(configuration: ReadConfiguration) throws {
+        guard let data = configuration.file.regularFileContents else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        markdown = try ColuracetamDocument.importPDF(data)
+    }
+
+    func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {
+        // Viewer scenes never save; refuse defensively.
+        throw CocoaError(.fileWriteNoPermission)
+    }
+}
+
+/// Thrown when a PDF has no extractable text layer (scanned or image-only).
+nonisolated struct PDFImportUnsupportedError: LocalizedError {
+    let result: PDFImportResult
+
+    var errorDescription: String? {
+        String(
+            localized: "This PDF has no extractable text layer.",
+            comment: "Error shown when importing a scanned or image-only PDF",
+        )
+    }
+
+    var recoverySuggestion: String? {
+        String(
+            localized: "It looks like a scanned or image-only document. Run it through an OCR tool first, then import the result.",
+            comment: "Recovery suggestion for scanned PDF import failure",
+        )
     }
 }

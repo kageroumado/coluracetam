@@ -27,6 +27,12 @@ let package = Package(
         .target(
             name: "ColuracetamKit",
             dependencies: ["ColuracetamPDFCore"],
+            resources: [
+                // pdf.js binary CMaps (Adobe CMap resources, BSD-licensed —
+                // LICENSE ships inside the folder). Needed for CID/CJK text
+                // extraction; PDFImporter points the core here on first use.
+                .copy("Resources/bcmaps"),
+            ],
             swiftSettings: swiftSettings,
         ),
         .testTarget(

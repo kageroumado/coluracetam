@@ -39,11 +39,20 @@ nonisolated public enum PDFImportError: Error, Sendable {
 
 /// Bytes-in → Markdown-out wrapper over the static Rust core.
 nonisolated public enum PDFImporter {
+    /// One-time wiring of the bundled CMap data (CID/CJK fonts) into the
+    /// Rust core. `static let` gives thread-safe exactly-once semantics.
+    private static let bcmapsBootstrap: Void = {
+        if let dir = Bundle.module.url(forResource: "bcmaps", withExtension: nil) {
+            dir.withUnsafeFileSystemRepresentation { clr_pdf_set_bcmaps_dir($0) }
+        }
+    }()
+
     /// Convert PDF bytes to Markdown plus classification metadata.
     ///
     /// CPU-bound — around 20 ms for a ten-page text PDF; call off the main
     /// actor for large documents.
     public static func convert(_ data: Data) throws -> PDFImportResult {
+        _ = Self.bcmapsBootstrap
         let json = try data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
             let base = buffer.bindMemory(to: UInt8.self).baseAddress
             guard let raw = clr_pdf_convert(base, buffer.count) else {
@@ -71,13 +80,6 @@ nonisolated public enum PDFImporter {
             confidence: envelope.confidence ?? 0,
             hasEncodingIssues: envelope.hasEncodingIssues ?? false,
         )
-    }
-
-    /// Point CID/CJK CMap lookup at the app's bundled `bcmaps` resource
-    /// directory. Call once at launch; without it, CJK extraction silently
-    /// degrades.
-    public static func setBCMapsDirectory(_ url: URL) {
-        url.withUnsafeFileSystemRepresentation { clr_pdf_set_bcmaps_dir($0) }
     }
 
     private struct Envelope: Decodable {
