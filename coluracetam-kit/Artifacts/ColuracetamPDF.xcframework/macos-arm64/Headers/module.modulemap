@@ -1,4 +1,0 @@
-module ColuracetamPDFCore {
-    header "coluracetam_pdf.h"
-    export *
-}

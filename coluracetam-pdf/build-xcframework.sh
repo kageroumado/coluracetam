@@ -9,6 +9,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Prefer rustup's cargo (has cross-target std libs) over Homebrew rust's.
+if [[ -d /opt/homebrew/opt/rustup/bin ]]; then
+    export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
+fi
+
 TARGETS=(aarch64-apple-darwin x86_64-apple-darwin)
 OUTPUT="../coluracetam-kit/Artifacts/ColuracetamPDF.xcframework"
 
