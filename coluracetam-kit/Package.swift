@@ -18,13 +18,23 @@ let package = Package(
         .library(name: "ColuracetamKit", targets: ["ColuracetamKit"]),
     ],
     targets: [
+        // Static Rust library (C ABI over firecrawl/pdf-inspector).
+        // Rebuild with ../coluracetam-pdf/build-xcframework.sh.
+        .binaryTarget(
+            name: "ColuracetamPDFCore",
+            path: "Artifacts/ColuracetamPDF.xcframework",
+        ),
         .target(
             name: "ColuracetamKit",
+            dependencies: ["ColuracetamPDFCore"],
             swiftSettings: swiftSettings,
         ),
         .testTarget(
             name: "ColuracetamKitTests",
             dependencies: ["ColuracetamKit"],
+            resources: [
+                .copy("Fixtures"),
+            ],
             swiftSettings: swiftSettings,
         ),
     ],

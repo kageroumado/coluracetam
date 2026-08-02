@@ -1,0 +1,20 @@
+[package]
+name = "coluracetam-pdf"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "C-ABI shim over firecrawl/pdf-inspector for Coluracetam's PDF → Markdown import"
+license = "MIT"
+
+[lib]
+name = "coluracetam_pdf"
+crate-type = ["staticlib"]
+
+[dependencies]
+# crates.io lags main; pin the exact revision the shim was written against.
+pdf-inspector = { git = "https://github.com/firecrawl/pdf-inspector", rev = "a15ec2d68d51dbe6a39d1da688ec7a3f642d846c" }
+serde_json = "1.0"
+
+[profile.release]
+lto = true
+strip = "debuginfo"
