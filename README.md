@@ -10,7 +10,7 @@
 
 [![kagerou.glass](https://img.shields.io/badge/kagerou.glass-4bbbff?style=for-the-badge&logo=safari&logoColor=white)](https://kagerou.glass/coluracetam/)
 [![@kageroumado](https://img.shields.io/badge/@kageroumado-76e6e0?style=for-the-badge&logo=x&logoColor=0d0a10)](https://x.com/kageroumado)
-[![macOS Tahoe](https://img.shields.io/badge/macOS-Tahoe_26%2B-0d0a10?style=for-the-badge&logo=apple&logoColor=white)](#requirements)
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-0d0a10?style=for-the-badge&logo=apple&logoColor=white)](#requirements)
 
 <a href="https://apps.apple.com/app/apple-store/id6788680916?pt=128650112&ct=GitHub&mt=8"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-mac-app-store/black/en-us" alt="Download on the Mac App Store" height="48"></a>
 
@@ -55,7 +55,7 @@ want to write, toggle the live split: rendered preview on top, raw source below,
 
 ## Requirements
 
-- **macOS Tahoe 26.4.** That's what I build and test on; it likely runs on earlier 26.x, but I haven't tested it there.
+- **macOS 26+.**
 - **Xcode 26+** to build, with Swift 6 strict concurrency enabled.
 
 ## Download
