@@ -12,6 +12,8 @@
 [![@kageroumado](https://img.shields.io/badge/@kageroumado-76e6e0?style=for-the-badge&logo=x&logoColor=0d0a10)](https://x.com/kageroumado)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-0d0a10?style=for-the-badge&logo=apple&logoColor=white)](#requirements)
 
+<a href="https://kagerou.glass/get/coluracetam?from=readme"><img src=".github/download.svg" alt="Download Coluracetam for Mac" width="360" height="80"></a><br><sub>A signed, notarized disk image · free and open source (MIT)</sub>
+
 <a href="https://apps.apple.com/app/apple-store/id6788680916?pt=128650112&ct=GitHub&mt=8"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-mac-app-store/black/en-us" alt="Download on the Mac App Store" height="48"></a>
 
 <table>
@@ -61,7 +63,7 @@ want to write, toggle the live split: rendered preview on top, raw source below,
 ## Download
 
 - **[Mac App Store](https://apps.apple.com/app/apple-store/id6788680916?pt=128650112&ct=GitHub&mt=8)** — $4.99. The same reader, sandboxed and updated through the store. Since the DMG below is free, buying this copy is a deliberate act: it pays for the hours this app took and the apps that come next. If that's the copy on your Mac — thank you. ♡
-- **[GitHub Releases](https://github.com/kageroumado/coluracetam/releases/latest)** — free, MIT, notarized DMG.
+- **[Download the DMG](https://kagerou.glass/get/coluracetam?from=readme)** — free, MIT, notarized DMG.
 - **Homebrew** — `brew install --cask kageroumado/tap/coluracetam` — the same free DMG, via [my tap](https://github.com/kageroumado/homebrew-tap). The fully qualified name auto-trusts the cask under Homebrew 6's tap-trust system.
 
 Or build it yourself — it's a single Run in Xcode.
