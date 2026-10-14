@@ -2,8 +2,7 @@
 
 Coluracetam brings the same Markdown preview to Finder’s spacebar and a live split editor, with document-wide selection and search. It also generates file thumbnails and exports PDF and HTML.
 
-<a href="https://kagerou.glass/get/coluracetam?from=readme"><img src=".github/download.svg" alt="Download Coluracetam for Mac" width="360" height="80"></a>
-<a href="https://apps.apple.com/app/apple-store/id6788680916?pt=128650112&ct=GitHub&mt=8"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-mac-app-store/black/en-us" alt="Download on the Mac App Store" height="48"></a>
+<a href="https://kagerou.glass/coluracetam/"><img src=".github/download.svg" alt="Download Coluracetam for Mac" width="360" height="80"></a>
 
 ![Coluracetam](.github/coluracetam-split.png)
 
